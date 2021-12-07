@@ -6,7 +6,7 @@ void main() {
   );
 }
 
-String _name = "DOM";
+String _name = 'DOM';
 
 class ChatApp extends StatelessWidget {
   const ChatApp({
@@ -31,24 +31,29 @@ class ChatMessage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 10.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            child: CircleAvatar(child: Text(_name[0])),
-          ),
-          Column(
-            children: [
-              Text(_name, style: Theme.of(context).textTheme.headline4),
-              Container(
-                margin: const EdgeInsets.only(top: 5.0),
-                child: Text(text),
-              )
-            ],
-          )
-        ],
+    return SizeTransition(
+      sizeFactor:
+          CurvedAnimation(parent: animationController, curve: Curves.easeInOut),
+      axisAlignment: 0.0,
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 10.0),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              child: CircleAvatar(child: Text(_name[0])),
+            ),
+            Column(
+              children: [
+                Text(_name, style: Theme.of(context).textTheme.headline4),
+                Container(
+                  margin: const EdgeInsets.only(top: 5.0),
+                  child: Text(text),
+                )
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -67,6 +72,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   final List<ChatMessage> _messages = [];
   final _textController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
+  bool _isComposing = false;
 
   void _handleSubmitted(String text) {
     _textController.clear();
@@ -88,7 +94,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Center(child: const Text('ChatUI'))),
-      //body: _buildTextComposer(),
+      // body: _buildTextComposer(),
       body: Column(
         children: [
           Flexible(
@@ -99,13 +105,10 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
               itemCount: _messages.length,
             ),
           ),
-          const Divider(
-            height: 1.0,
-          ),
+          const Divider(height: 1.0),
           Container(
-            decoration: BoxDecoration(color: Theme.of(context).cardColor),
-            child: _buildTextComposer(),
-          )
+              decoration: BoxDecoration(color: Theme.of(context).cardColor),
+              child: _buildTextComposer())
         ],
       ),
     );
@@ -121,7 +124,12 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
             Flexible(
               child: TextField(
                 controller: _textController,
-                onSubmitted: _handleSubmitted,
+                onChanged: (text){
+                  setState(() {
+                    _isComposing = text.isNotEmpty;
+                  });
+                },
+                onSubmitted: _isComposing ? _handleSubmitted: null,
                 decoration:
                     const InputDecoration.collapsed(hintText: 'Send a message'),
                 focusNode: _focusNode,
@@ -137,5 +145,13 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    for (var message in _messages) {
+      message.animationController.dispose();
+    }
+    super.dispose();
   }
 }
